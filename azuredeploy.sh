@@ -130,26 +130,31 @@ setup_filesystems()
         mkdir -p $SHARE_PROJ
         mkdir -p $SHARE_SOFT
         mkdir -p $SHARE_UTIL
-        echo "$SHARE_HOME    *(rw,async)" >> /etc/exports
-        echo "$SHARE_PROJ    *(rw,async)" >> /etc/exports
-        echo "$SHARE_SOFT    *(rw,async)" >> /etc/exports
-        echo "$SHARE_CONF    *(rw,async)" >> /etc/exports
-        echo "$SHARE_UTIL    *(rw,async)" >> /etc/exports
+        mkdir -p $SHARE_DB
+        echo "$SHARE_HOME    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
+        echo "$SHARE_PROJ    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
+        echo "$SHARE_SOFT    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
+        echo "$SHARE_CONF    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
+        echo "$SHARE_UTIL    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
+        echo "$SHARE_DB      10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
 
         systemctl enable rpcbind || echo "Already enabled"
         systemctl enable nfs-server || echo "Already enabled"
         systemctl start rpcbind || echo "Already enabled"
         systemctl start nfs-server || echo "Already enabled"
     else
-        mkdir -p $SHARE_HOME
-        mkdir -p $SHARE_PROJ
         mkdir -p $SHARE_SOFT
         mkdir -p $SHARE_CONF
+        mkdir -p $SHARE_UTIL
+        mkdir -p $SHARE_DB
+        mkdir -p /projects
+        mkdir -p /scratch
         echo "master:$SHARE_HOME /home          nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_PROJ /projects      nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_SOFT $SHARE_SOFT    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_CONF $SHARE_CONF    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_UTIL $SHARE_UTIL    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
+        echo "master:$SHARE_DB   $SHARE_DB      nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         mount -a
     fi
 }
@@ -411,7 +416,7 @@ install_slurm()
         yum install ncurses gtk2 rrdtool libcgroup hwloc lua pam-devel numactl hdf5 perl-DBI perl-Switch -y
         sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/sysconfig/selinux 
         chkconfig iptables off
-        cd /share/projects/RHEL/7.2/x86_64/
+        cd /projects/RHEL/7.2/x86_64/
         rpm -ivh slurm-15.08.8-1.el7.centos.x86_64.rpm slurm-lua-15.08.8-1.el7.centos.x86_64.rpm slurm-munge-15.08.8-1.el7.centos.x86_64.rpm slurm-pam_slurm-15.08.8-1.el7.centos.x86_64.rpm slurm-perlapi-15.08.8-1.el7.centos.x86_64.rpm slurm-plugins-15.08.8-1.el7.centos.x86_64.rpm slurm-sjobexit-15.08.8-1.el7.centos.x86_64.rpm slurm-sjstat-15.08.8-1.el7.centos.x86_64.rpm
         cp -pr /share/configspace/system_files/etc/slurm/* /etc/slurm/
         mkdir -p /var/run/slurm /var/spool/slurmd /var/spool/slurm /var/log/slurm
@@ -422,12 +427,12 @@ install_slurm()
     fi
 }
 
-setup_software
+#setup_software
 setup_filesystems
-setup_configspace
+#setup_configspace
 setup_ssh
 setup_env
-install_lmod
-install_easybuild
+#install_lmod
+#install_easybuild
 install_slurm
-setup_docker
+#setup_docker
