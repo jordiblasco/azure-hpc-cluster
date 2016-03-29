@@ -184,7 +184,7 @@ setup_admin_user()
         chown $ADMIN_USER:$ADMIN_GROUP $SHARE_HOME/$ADMIN_USER/.ssh/authorized_keys
         chown $ADMIN_USER:$ADMIN_GROUP $SHARE_HOME/$ADMIN_USER/.ssh/config
         chown $ADMIN_USER:$ADMIN_GROUP $SHARE_PROJ
-        chmow 755 $SHARE_PROJ $SHARE_HOME $SHARE_SOFT
+        chmow 755 $SHARE_PROJ $SHARE_HOME $SHARE_SOFT /home /projects /scratch
     else
         #useradd -c "Admin User" -g $ADMIN_GROUP -d $SHARE_HOME/$ADMIN_USER -s /bin/bash -u $ADMIN_UID $ADMIN_USER
         echo "nothing to do here"
@@ -207,6 +207,9 @@ setup_hpc_user()
         echo "    PasswordAuthentication no" >> $SHARE_HOME/$HPC_USER/.ssh/config
         chown $HPC_USER:$HPC_GROUP $SHARE_HOME/$HPC_USER/.ssh/authorized_keys
         chown $HPC_USER:$HPC_GROUP $SHARE_HOME/$HPC_USER/.ssh/config
+        chown $HPC_USER:$HPC_GROUP $SHARE_SOFT
+        chown $HPC_USER:$HPC_GROUP $SHARE_UTIL
+        chown $HPC_USER:$HPC_GROUP $SHARE_DB
     else
         useradd -c "HPC User" -g $HPC_GROUP -d $SHARE_HOME/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER
     fi
@@ -322,10 +325,10 @@ install_lmod()
 install_easybuild()
 {
     if is_first_worker; then
-        chown $HPC_USER:$HPC_GROUP $SHARE_SOFT
+        chown -R $HPC_USER:$HPC_GROUP $SHARE_SOFT
         cd $SHARE_SOFT
         curl -O https://raw.githubusercontent.com/hpcugent/easybuild-framework/develop/easybuild/scripts/bootstrap_eb.py
-        su - $HPC_USER -c "source /etc/profile.d/easybuild.sh; python $SHARE_SOFT/bootstrap_eb.py $SHARE_SOFT"
+        su - $HPC_USER -c "source /etc/profile.d/easybuild.sh; python $SHARE_SOFT/bootstrap_eb.py $EB_PREFIX"
         echo "Easybuild installed"
     fi
 }
@@ -422,17 +425,18 @@ install_slurm()
         mkdir -p /var/run/slurm /var/spool/slurmd /var/spool/slurm /var/log/slurm
         chown -R slurm:slurm /etc/slurm /var/spool/slurmd /var/spool/slurm /var/log/slurm
         echo "130.216.161.212 slurmdbd-01" >> /etc/hosts
+        echo "10.0.0.254      slurm-01"    >> /etc/hosts
         systemctl enable slurmd.service
         systemctl start slurmd.service
     fi
 }
 
-#setup_software
+setup_software
 setup_filesystems
-#setup_configspace
+setup_configspace
 setup_ssh
 setup_env
-#install_lmod
-#install_easybuild
+install_lmod
+install_easybuild
 install_slurm
-#setup_docker
+setup_docker
