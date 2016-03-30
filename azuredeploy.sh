@@ -155,6 +155,7 @@ setup_filesystems()
         echo "master:$SHARE_CONF $SHARE_CONF    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_UTIL $SHARE_UTIL    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
         echo "master:$SHARE_DB   $SHARE_DB      nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
+        echo "/mnt/resource     /scratch        none    bind" >> /etc/fstab
         mount -a
     fi
 }
@@ -253,9 +254,6 @@ setup_env()
         echo "@$HPC_GROUP soft memlock unlimited" >> /etc/security/limits.conf
         echo "*           hard   nofile    1024000" >> /etc/security/limits.conf
         echo "*           soft   nofile    1024000" >> /etc/security/limits.conf
-        # User enviroment setup
-        cp -p $SHARE_CONF/system_files/etc/profile.d/easybuild.sh /etc/profile.d/
-        cp -p $SHARE_CONF/system_files/etc/cpu-id-map.conf /etc/
     fi
 }
 
@@ -265,7 +263,7 @@ install_software()
         Debian*)
             pkgs="build-essential libbz2-1.0 libssl-dev nfs-client rpcbind curl wget gawk patch unzip libibverbs libibverbs-devel python-devel python-pip apt-transport-https ca-certificates members git parallel vim"
             if ! is_master; then
-                pkgs="$pkgs Lmod tcl tcl-devel"
+                pkgs="$pkgs tcl tcl-devel"
             fi
             INSTALLER="apt-get -y install"
             apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
@@ -275,7 +273,7 @@ install_software()
         Ubuntu*)
             pkgs="build-essential libbz2-1.0 libssl-dev nfs-client rpcbind curl wget gawk libibverbs libibverbs-devel python-devel python-pip apt-transport-https ca-certificates members git parallel vim"
             if ! is_master; then
-                pkgs="$pkgs Lmod tcl tcl-devel"
+                pkgs="$pkgs tcl tcl-devel"
             fi
             INSTALLER="apt-get -y install"
             apt-get -y update
@@ -283,7 +281,7 @@ install_software()
         RHEL*|CentOS*)
             pkgs="epel-release @base @development-tools lsb libdb flex perl perl-Data-Dumper perl-Digest-MD5 perl-JSON perl-Parse-CPAN-Meta perl-CPAN pcre pcre-devel zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget curl gawk patch unzip libibverbs libibverbs-devel python-devel python-pip members git parallel vim"
             if ! is_master; then
-                pkgs="$pkgs Lmod tcl tcl-devel"
+                pkgs="$pkgs lua lua-filesystem lua-posix tcl tcl-devel"
             fi
             INSTALLER="yum -y install"
             yum -y update
@@ -293,7 +291,7 @@ install_software()
             #zypper -n --gpg-auto-import-keys ar http://download.opensuse.org/repositories/network:/cluster/SLE_12/network:cluster.repo
             pkgs="libbz2-1 libz1 openssl libopenssl-devel gcc gcc-c++ nfs-client rpcbind wget curl gawk libibverbs libibverbs-devel python-devel python-pip members git parallel vim"
             if ! is_master; then
-                pkgs="$pkgs Lmod tcl tcl-devel"
+                pkgs="$pkgs tcl tcl-devel"
             fi
             INSTALLER="zypper -n install"
        ;;
@@ -320,6 +318,10 @@ install_lmod()
         ln -s /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
         echo "Lmod installed"
     fi
+    if ! is_master; then
+        ln -s /share/utils/lmod/lmod/init/profile /etc/profile.d/lmod.sh
+        ln -s /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
+    fi
 }
 
 install_easybuild()
@@ -330,6 +332,10 @@ install_easybuild()
         curl -O https://raw.githubusercontent.com/hpcugent/easybuild-framework/develop/easybuild/scripts/bootstrap_eb.py
         su - $HPC_USER -c "source /etc/profile.d/easybuild.sh; python $SHARE_SOFT/bootstrap_eb.py $EB_PREFIX"
         echo "Easybuild installed"
+    fi
+    if ! is_master; then
+        ln -s $SHARE_CONF/system_files/etc/profile.d/easybuild.sh /etc/profile.d/
+        ln -s $SHARE_CONF/system_files/etc/cpu-id-map.conf /etc/
     fi
 }
 
