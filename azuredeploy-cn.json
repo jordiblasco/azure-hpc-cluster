@@ -312,6 +312,8 @@
         "ipConfigurations": [
           {
             "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
