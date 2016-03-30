@@ -131,13 +131,16 @@ setup_filesystems()
         mkdir -p $SHARE_SOFT
         mkdir -p $SHARE_UTIL
         mkdir -p $SHARE_DB
+        mkdir -p /projects
         echo "$SHARE_HOME    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
         echo "$SHARE_PROJ    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
         echo "$SHARE_SOFT    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
         echo "$SHARE_CONF    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
         echo "$SHARE_UTIL    10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
         echo "$SHARE_DB      10.0.0.0/255.0.0.0(rw,async,no_root_squash)" >> /etc/exports
-
+        echo "/share/home        /home      none    bind" >> /etc/fstab
+        echo "/share/projects    /projects  none    bind" >> /etc/fstab
+        mount -a
         systemctl enable rpcbind || echo "Already enabled"
         systemctl enable nfs-server || echo "Already enabled"
         systemctl start rpcbind || echo "Already enabled"
@@ -279,7 +282,7 @@ install_software()
             apt-get -y update
         ;;
         RHEL*|CentOS*)
-            pkgs="epel-release @base @development-tools lsb libdb flex perl perl-Data-Dumper perl-Digest-MD5 perl-JSON perl-Parse-CPAN-Meta perl-CPAN pcre pcre-devel zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget curl gawk patch unzip libibverbs libibverbs-devel python-devel python-pip members git parallel vim"
+            pkgs="epel-release @base @development-tools lsb libdb flex perl perl-Data-Dumper perl-Digest-MD5 perl-JSON perl-Parse-CPAN-Meta perl-CPAN pcre pcre-devel zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget curl gawk patch unzip libibverbs libibverbs-devel python-devel python-pip members git parallel vim pdsh-mod-dshgroup pdsh-mod-genders pdsh-mod-netgroup pdsh-mod-nodeupdown pdsh-rcmd-ssh pdsh clustershell"
             if ! is_master; then
                 pkgs="$pkgs lua lua-filesystem lua-posix tcl tcl-devel"
             fi

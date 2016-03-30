@@ -241,6 +241,7 @@
     "newStorageAccountName": "[concat('st', uniqueString(resourceGroup().id))]",
     "vmStorageAccountContainerName": "vhd",
     "OSDiskName": "osdisk",
+    "masterVMName": "master",
     "workerVMName": "[parameters('computeNodeNamePrefix')]",
 	"armApiVersion": "2015-06-15",
     "nicName": "nic",
@@ -313,7 +314,7 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Static",
+              "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
