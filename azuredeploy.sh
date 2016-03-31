@@ -28,6 +28,7 @@ SHARE_PROJ=/share/projects
 SHARE_SOFT=/share/easybuild
 SHARE_CONF=/share/configspace
 SHARE_UTIL=/share/utils
+SHARE_DB=/share/db
 
 # Munged
 MUNGE_USER=munge
@@ -185,7 +186,7 @@ setup_admin_user()
     fi
     if is_master; then
         # Configure public key auth for the HPC user
-        if [[ ! -f /home/$ADMIN_USER/.ssh/authorized_keys]]; then
+        if [[ ! -f /home/$ADMIN_USER/.ssh/authorized_keys ]]; then
             mkdir -p /home/$ADMIN_USER/.ssh
             chown -R $ADMIN_USER $SHARE_HOME/$ADMIN_USER
             sudo -u $ADMIN_USER ssh-keygen -t rsa -f /home/$ADMIN_USER/.ssh/id_rsa -q -P ""
@@ -220,7 +221,7 @@ setup_hpc_user()
     fi
     if is_master; then
         # Configure public key auth for the HPC user
-        if [[ ! -f /home/$HPC_USER/.ssh/authorized_keys]]; then
+        if [[ ! -f /home/$HPC_USER/.ssh/authorized_keys ]]; then
             sudo -u $HPC_USER ssh-keygen -t rsa -f /home/$HPC_USER/.ssh/id_rsa -q -P ""
             cat /home/$HPC_USER/.ssh/id_rsa.pub > /home/$HPC_USER/.ssh/authorized_keys
             echo "Host *" > /home/$HPC_USER/.ssh/config
@@ -246,10 +247,10 @@ setup_ssh()
         mkdir -p $SHARE_CONF/system_files/etc/ssh/
         cp -pr /etc/ssh/ssh_host_* $SHARE_CONF/system_files/etc/ssh/
         mkdir -p /root/.ssh
-        cp -p $SHARE_HOME/$ADMIN_USER/.ssh/authorized_keys /root/.ssh/authorized_keys
+        cp -p /home/$ADMIN_USER/.ssh/* /root/.ssh/
         chown -R root:root /root/.ssh
-        chmod 700 .ssh
-        chmod 640 .ssh/authorized_keys
+        chmod 700 /root/.ssh
+        chmod 640 /root/.ssh/authorized_keys
     else
         setup_admin_user
         setup_hpc_user
@@ -258,10 +259,10 @@ setup_ssh()
         chmod u+s /usr/lib64/ssh/ssh-keysign
         cp -p /etc/ssh/shosts.equiv /root/.shosts
         mkdir -p /root/.ssh
-        cp -p /home/$ADMIN_USER/.ssh/authorized_keys /root/.ssh/authorized_keys
+        cp -p /home/$ADMIN_USER/.ssh/* /root/.ssh/
         chown -R root:root /root/.ssh
-        chmod 700 .ssh
-        chmod 640 .ssh/authorized_keys
+        chmod 700 /root/.ssh
+        chmod 640 /root/.ssh/authorized_keys
         systemctl restart sshd
     fi
 }
@@ -336,13 +337,13 @@ install_lmod()
     if is_first_worker; then
         yum install lua lua-filesystem lua-posix -y
         su - $HPC_USER -c "git clone https://github.com/TACC/Lmod.git; cd Lmod; ./configure --prefix=/share/utils; make; make install"
-        ln -s /share/utils/lmod/lmod/init/profile /etc/profile.d/lmod.sh
-        ln -s /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
+        ln -sf /share/utils/lmod/lmod/init/profile /etc/profile.d/lmod.sh
+        ln -sf /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
         echo "Lmod installed"
     fi
     if ! is_master; then
-        ln -s /share/utils/lmod/lmod/init/profile /etc/profile.d/lmod.sh
-        ln -s /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
+        ln -sf /share/utils/lmod/lmod/init/profile /etc/profile.d/lmod.sh
+        ln -sf /share/utils/lmod/lmod/init/cshrc /etc/profile.d/lmod.csh
     fi
 }
 
@@ -356,8 +357,8 @@ install_easybuild()
         echo "Easybuild installed"
     fi
     if ! is_master; then
-        ln -s $SHARE_CONF/system_files/etc/profile.d/easybuild.sh /etc/profile.d/
-        ln -s $SHARE_CONF/system_files/etc/cpu-id-map.conf /etc/
+        ln -sf $SHARE_CONF/system_files/etc/profile.d/easybuild.sh /etc/profile.d/
+        ln -sf $SHARE_CONF/system_files/etc/cpu-id-map.conf /etc/
     fi
 }
 
