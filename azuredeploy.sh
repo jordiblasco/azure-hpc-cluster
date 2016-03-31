@@ -173,24 +173,33 @@ setup_configspace()
 
 setup_admin_user()
 {
+    if [[ "$(id -u $ADMIN_USER)" != "$SLURM_UID"  &&  "$(id -g $ADMIN_USER)" != "$SLURM_GID" ]]; then
+        groupmod -g $ADMIN_GID $ADMIN_GROUP
+        usermod -c "Admin User" -g $ADMIN_GID -d /home/$ADMIN_USER -s /bin/bash -u $ADMIN_UID $ADMIN_USER
+    fi
+    if [[ "$(getent group $ADMIN_GROUP)" == "" ]]; then
+        groupadd -g $ADMIN_GID $ADMIN_GROUP
+    fi
+    if [[ "$(getent passwd $ADMIN_USER)" == "" ]]; then
+        useradd -c "Admin User" -g $ADMIN_GID -d /home/$ADMIN_USER -s /bin/bash -u $ADMIN_UID $ADMIN_USER
+    fi
     if is_master; then
-        #groupmod -g $ADMIN_GID $ADMIN_GROUP
-        #usermod -c "Admin User" -g $ADMIN_GID -d $SHARE_HOME/$ADMIN_USER -s /bin/bash -m -u $ADMIN_UID $ADMIN_USER
         # Configure public key auth for the HPC user
-        mkdir -p $SHARE_HOME/$ADMIN_USER/.ssh
-        chown -R $ADMIN_USER $SHARE_HOME/$ADMIN_USER
-        sudo -u $ADMIN_USER ssh-keygen -t rsa -f $SHARE_HOME/$ADMIN_USER/.ssh/id_rsa -q -P ""
-        cat $SHARE_HOME/$ADMIN_USER/.ssh/id_rsa.pub > $SHARE_HOME/$ADMIN_USER/.ssh/authorized_keys
-        echo "Host *" > $SHARE_HOME/$ADMIN_USER/.ssh/config
-        echo "    StrictHostKeyChecking no" >> $SHARE_HOME/$ADMIN_USER/.ssh/config
-        echo "    UserKnownHostsFile /dev/null" >> $SHARE_HOME/$ADMIN_USER/.ssh/config
-        echo "    PasswordAuthentication no" >> $SHARE_HOME/$ADMIN_USER/.ssh/config
-        chown $ADMIN_USER:$ADMIN_GROUP $SHARE_HOME/$ADMIN_USER/.ssh/authorized_keys
-        chown $ADMIN_USER:$ADMIN_GROUP $SHARE_HOME/$ADMIN_USER/.ssh/config
+        if [[ ! -f /home/$ADMIN_USER/.ssh/authorized_keys]]; then
+            mkdir -p /home/$ADMIN_USER/.ssh
+            chown -R $ADMIN_USER $SHARE_HOME/$ADMIN_USER
+            sudo -u $ADMIN_USER ssh-keygen -t rsa -f /home/$ADMIN_USER/.ssh/id_rsa -q -P ""
+            cat /home/$ADMIN_USER/.ssh/id_rsa.pub > /home/$ADMIN_USER/.ssh/authorized_keys
+            echo "Host *" > /home/$ADMIN_USER/.ssh/config
+            echo "    StrictHostKeyChecking no" >> /home/$ADMIN_USER/.ssh/config
+            echo "    UserKnownHostsFile /dev/null" >> /home/$ADMIN_USER/.ssh/config
+            echo "    PasswordAuthentication no" >> /home/$ADMIN_USER/.ssh/config
+        fi
+        chown $ADMIN_USER:$ADMIN_GROUP /home/$ADMIN_USER/.ssh/authorized_keys
+        chown $ADMIN_USER:$ADMIN_GROUP /home/$ADMIN_USER/.ssh/config
         chown $ADMIN_USER:$ADMIN_GROUP $SHARE_PROJ
-        chmow 755 $SHARE_PROJ $SHARE_HOME $SHARE_SOFT /home /projects /scratch
+        chmow 755 $SHARE_PROJ /home $SHARE_SOFT /home /projects /scratch
     else
-        #useradd -c "Admin User" -g $ADMIN_GROUP -d $SHARE_HOME/$ADMIN_USER -s /bin/bash -u $ADMIN_UID $ADMIN_USER
         echo "nothing to do here"
     fi
     # Don't require password for Admin user sudo
@@ -199,23 +208,33 @@ setup_admin_user()
 
 setup_hpc_user()
 {
-    if is_master; then
+    if [[ "$(id -u $HPC_USER)" != "$SLURM_UID"  &&  "$(id -g $HPC_USER)" != "$SLURM_GID" ]]; then
         groupmod -g $HPC_GID $HPC_GROUP
-        useradd -c "HPC User" -g $HPC_GID -d $SHARE_HOME/$HPC_USER -s /bin/bash -m -u $HPC_UID $HPC_USER
+        usermod -c "Apps User" -g $HPC_GID -d /home/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER
+    fi
+    if [[ "$(getent group $HPC_GROUP)" == "" ]]; then
+        groupadd -g $HPC_GID $HPC_GROUP
+    fi
+    if [[ "$(getent passwd $HPC_USER)" == "" ]]; then
+        useradd -c "Apps User" -g $HPC_GID -d /home/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER
+    fi
+    if is_master; then
         # Configure public key auth for the HPC user
-        sudo -u $HPC_USER ssh-keygen -t rsa -f $SHARE_HOME/$HPC_USER/.ssh/id_rsa -q -P ""
-        cat $SHARE_HOME/$HPC_USER/.ssh/id_rsa.pub > $SHARE_HOME/$HPC_USER/.ssh/authorized_keys
-        echo "Host *" > $SHARE_HOME/$HPC_USER/.ssh/config
-        echo "    StrictHostKeyChecking no" >> $SHARE_HOME/$HPC_USER/.ssh/config
-        echo "    UserKnownHostsFile /dev/null" >> $SHARE_HOME/$HPC_USER/.ssh/config
-        echo "    PasswordAuthentication no" >> $SHARE_HOME/$HPC_USER/.ssh/config
-        chown $HPC_USER:$HPC_GROUP $SHARE_HOME/$HPC_USER/.ssh/authorized_keys
-        chown $HPC_USER:$HPC_GROUP $SHARE_HOME/$HPC_USER/.ssh/config
+        if [[ ! -f /home/$HPC_USER/.ssh/authorized_keys]]; then
+            sudo -u $HPC_USER ssh-keygen -t rsa -f /home/$HPC_USER/.ssh/id_rsa -q -P ""
+            cat /home/$HPC_USER/.ssh/id_rsa.pub > /home/$HPC_USER/.ssh/authorized_keys
+            echo "Host *" > /home/$HPC_USER/.ssh/config
+            echo "    StrictHostKeyChecking no" >> /home/$HPC_USER/.ssh/config
+            echo "    UserKnownHostsFile /dev/null" >> /home/$HPC_USER/.ssh/config
+            echo "    PasswordAuthentication no" >> /home/$HPC_USER/.ssh/config
+        fi
+        chown $HPC_USER:$HPC_GROUP /home/$HPC_USER/.ssh/authorized_keys
+        chown $HPC_USER:$HPC_GROUP /home/$HPC_USER/.ssh/config
         chown $HPC_USER:$HPC_GROUP $SHARE_SOFT
         chown $HPC_USER:$HPC_GROUP $SHARE_UTIL
         chown $HPC_USER:$HPC_GROUP $SHARE_DB
     else
-        useradd -c "HPC User" -g $HPC_GROUP -d $SHARE_HOME/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER
+        echo "nothing to do here"
     fi
 }
 
