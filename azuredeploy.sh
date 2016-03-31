@@ -263,6 +263,7 @@ setup_ssh()
         chown -R root:root /root/.ssh
         chmod 700 /root/.ssh
         chmod 640 /root/.ssh/authorized_keys
+        sed -i "s/#PermitRootLogin yes/PermitRootLogin yes/g" /etc/ssh/sshd_config
         systemctl restart sshd
     fi
 }
