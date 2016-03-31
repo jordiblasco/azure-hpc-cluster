@@ -168,7 +168,8 @@ setup_configspace()
 {
     if is_master; then
         chown $ADMIN_USER:$ADMIN_USER $SHARE_PATH
-        su - $ADMIN_USER -c "cd $SHARE_PATH; git clone -b azure https://$TOKEN:x-oauth-basic@$PRIVATE_REPO "
+        cd $SHARE_PATH
+        git clone -b azure https://$TOKEN:x-oauth-basic@$PRIVATE_REPO
     fi
 }
 
@@ -454,8 +455,10 @@ install_slurm()
         cp -pr /share/configspace/system_files/etc/slurm/* /etc/slurm/
         mkdir -p /var/run/slurm /var/spool/slurmd /var/spool/slurm /var/log/slurm
         chown -R slurm:slurm /etc/slurm /var/spool/slurmd /var/spool/slurm /var/log/slurm
-        echo "130.216.161.212 slurmdbd-01" >> /etc/hosts
+        #echo "130.216.161.212 slurmdbd-01" >> /etc/hosts
+        echo "10.0.0.254      slurmdbd-01" >> /etc/hosts
         echo "10.0.0.254      slurm-01"    >> /etc/hosts
+        echo "10.0.0.254      ldap-01"    >> /etc/hosts
         systemctl enable slurmd.service
         systemctl start slurmd.service
     fi
